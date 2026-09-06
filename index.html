@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="description"
+        content="ROAD RUSH: INFINITE - An endless 3D driving experience."
+    >
+
+    <title>ROAD RUSH: INFINITE</title>
+</head>
+
+<body>
+
+    <div id="game"></div>
+
+    <div id="loading-screen">
+        <div class="loading-content">
+
+            <div class="game-logo">
+                ROAD RUSH
+            </div>
+
+            <div class="game-subtitle">
+                INFINITE
+            </div>
+
+            <div class="loading-bar">
+                <div
+                    id="loading-progress"
+                    class="loading-progress"
+                ></div>
+            </div>
+
+            <div id="loading-text">
+                INITIALIZING ENGINE...
+            </div>
+
+        </div>
+    </div>
+
+    <div id="hud">
+
+        <div class="hud-top">
+
+            <div class="hud-card">
+                <span class="hud-label">SCORE</span>
+                <span id="score">0</span>
+            </div>
+
+            <div class="hud-card">
+                <span class="hud-label">SPEED</span>
+                <span>
+                    <span id="speed">0</span> KM/H
+                </span>
+            </div>
+
+            <div class="hud-card">
+                <span class="hud-label">COINS</span>
+                <span id="coins">0</span>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script
+        type="module"
+        src="./src/main.js"
+    ></script>
+
+</body>
+</html>
