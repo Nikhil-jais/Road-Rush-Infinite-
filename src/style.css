@@ -1,7 +1,7 @@
 * {
+    box-sizing: border-box;
     margin: 0;
     padding: 0;
-    box-sizing: border-box;
 }
 
 html,
@@ -9,9 +9,7 @@ body {
     width: 100%;
     height: 100%;
     overflow: hidden;
-
-    background: #03050a;
-
+    background: #050914;
     font-family:
         Arial,
         Helvetica,
@@ -19,239 +17,457 @@ body {
 }
 
 body {
-    user-select: none;
+    position: relative;
+    color: white;
 }
 
 #game {
     position: fixed;
     inset: 0;
+    z-index: 1;
+}
 
+#game canvas {
+    display: block;
     width: 100%;
     height: 100%;
 }
 
-canvas {
-    display: block;
-}
+/* =========================
+   COMMON SCREEN
+========================= */
 
-
-/* =========================================================
-   LOADING SCREEN
-========================================================= */
-
-#loading-screen {
+.screen {
     position: fixed;
     inset: 0;
 
-    z-index: 100;
-
     display: flex;
-    align-items: center;
     justify-content: center;
+    align-items: center;
 
     background:
         radial-gradient(
             circle at center,
-            #111c35 0%,
-            #050813 42%,
-            #010207 100%
+            rgba(20, 40, 80, .35),
+            rgba(0, 0, 0, .78)
         );
 
-    color: white;
-
-    transition:
-        opacity 0.9s ease,
-        visibility 0.9s ease;
+    z-index: 20;
 }
 
-#loading-screen.hidden {
-    opacity: 0;
-    visibility: hidden;
+.hidden {
+    display: none !important;
 }
 
-.loading-content {
-    width: min(520px, 82vw);
+/* =========================
+   LOADING
+========================= */
 
+.loading-box {
+    width: min(480px, 85vw);
     text-align: center;
 }
 
-.game-logo {
-    font-size: clamp(
-        42px,
-        8vw,
-        88px
-    );
-
-    font-weight: 950;
-
-    letter-spacing: 8px;
-
-    line-height: 0.9;
-
-    text-shadow:
-        0 0 15px rgba(255,255,255,0.2),
-        0 0 40px rgba(70,120,255,0.25);
+.logo {
+    font-size: clamp(38px, 8vw, 72px);
+    font-weight: 900;
+    letter-spacing: 6px;
 }
 
-.game-subtitle {
-    margin-top: 14px;
+.logo-small {
+    margin-top: 4px;
 
-    font-size: 15px;
+    font-size: 18px;
+    letter-spacing: 10px;
 
-    letter-spacing: 15px;
+    opacity: .65;
+}
 
-    opacity: 0.55;
+.loading-text {
+    margin-top: 45px;
+
+    font-size: 13px;
+    letter-spacing: 3px;
 }
 
 .loading-bar {
     width: 100%;
+    height: 6px;
 
-    height: 5px;
+    margin-top: 14px;
 
-    margin-top: 45px;
-
-    overflow: hidden;
-
+    background: rgba(255,255,255,.15);
     border-radius: 20px;
 
-    background:
-        rgba(255,255,255,0.1);
+    overflow: hidden;
 }
 
 .loading-progress {
     width: 0%;
-
     height: 100%;
 
+    background: white;
+
+    transition: width .2s ease;
+}
+
+/* =========================
+   MENU
+========================= */
+
+.menu-box {
+    width: min(560px, 90vw);
+
+    padding: 45px 35px;
+
+    text-align: center;
+
     background:
-        linear-gradient(
-            90deg,
-            #467cff,
-            #ffffff,
-            #467cff
-        );
+        rgba(5, 9, 20, .78);
+
+    border:
+        1px solid rgba(255,255,255,.15);
+
+    border-radius: 24px;
+
+    backdrop-filter: blur(14px);
 
     box-shadow:
-        0 0 15px
-        rgba(90,140,255,0.8);
+        0 30px 100px rgba(0,0,0,.6);
+}
+
+.game-title {
+    font-size: clamp(42px, 9vw, 82px);
+
+    font-weight: 900;
+
+    letter-spacing: 5px;
+}
+
+.game-subtitle {
+    margin-top: -5px;
+
+    font-size: 20px;
+
+    letter-spacing: 13px;
+
+    opacity: .65;
+}
+
+.tagline {
+    margin: 25px 0 35px;
+
+    font-size: 12px;
+
+    letter-spacing: 4px;
+
+    opacity: .7;
+}
+
+/* =========================
+   BUTTONS
+========================= */
+
+button {
+    border: 0;
+    outline: none;
+
+    font-family: inherit;
+
+    cursor: pointer;
+
+    user-select: none;
+
+    -webkit-tap-highlight-color: transparent;
+}
+
+.main-button,
+.secondary-button {
+    display: block;
+
+    width: 100%;
+
+    padding: 17px 20px;
+
+    margin-top: 12px;
+
+    border-radius: 12px;
+
+    font-weight: 800;
+
+    letter-spacing: 2px;
 
     transition:
-        width 0.25s ease;
+        transform .15s ease,
+        opacity .15s ease;
 }
 
-#loading-text {
-    margin-top: 16px;
+.main-button {
+    background: white;
+    color: #070a12;
 
-    font-size: 10px;
-
-    letter-spacing: 3px;
-
-    opacity: 0.5;
+    font-size: 16px;
 }
 
+.secondary-button {
+    background: rgba(255,255,255,.08);
+    color: white;
 
-/* =========================================================
+    border:
+        1px solid rgba(255,255,255,.15);
+}
+
+.main-button:hover,
+.secondary-button:hover {
+    transform: translateY(-2px);
+}
+
+.main-button:active,
+.secondary-button:active {
+    transform: scale(.97);
+}
+
+/* =========================
+   CONTROLS
+========================= */
+
+.controls {
+    display: grid;
+
+    grid-template-columns: 1fr 1fr;
+
+    gap: 10px;
+
+    margin-top: 30px;
+
+    font-size: 12px;
+
+    opacity: .75;
+}
+
+.controls div {
+    padding: 9px;
+
+    border-radius: 8px;
+
+    background: rgba(255,255,255,.05);
+}
+
+.controls b {
+    color: white;
+}
+
+/* =========================
    HUD
-========================================================= */
+========================= */
 
 #hud {
     position: fixed;
 
-    inset: 0;
+    top: 18px;
+    left: 18px;
+    right: 18px;
 
-    z-index: 20;
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    z-index: 10;
 
     pointer-events: none;
 }
 
-.hud-top {
-    display: flex;
+.hud-item {
+    min-width: 100px;
 
-    justify-content: space-between;
+    padding: 10px 15px;
 
-    align-items: flex-start;
-
-    padding: 22px;
-}
-
-.hud-card {
-    min-width: 125px;
-
-    padding: 11px 18px;
-
-    border: 1px solid
-        rgba(255,255,255,0.14);
-
-    border-radius: 14px;
+    border-radius: 12px;
 
     background:
-        rgba(3,7,16,0.52);
+        rgba(0,0,0,.45);
 
-    backdrop-filter:
-        blur(12px);
+    border:
+        1px solid rgba(255,255,255,.12);
 
-    box-shadow:
-        0 8px 30px
-        rgba(0,0,0,0.25);
+    backdrop-filter: blur(8px);
+}
+
+.hud-item span {
+    display: block;
+
+    font-size: 9px;
+
+    letter-spacing: 2px;
+
+    opacity: .55;
+}
+
+.hud-item strong {
+    display: block;
+
+    margin-top: 2px;
+
+    font-size: 18px;
+}
+
+.hud-item small {
+    font-size: 8px;
+    opacity: .5;
+}
+
+#pause-btn {
+    margin-left: auto;
+
+    width: 48px;
+    height: 48px;
+
+    border-radius: 12px;
+
+    background:
+        rgba(0,0,0,.5);
 
     color: white;
 
-    text-align: center;
+    border:
+        1px solid rgba(255,255,255,.15);
+
+    font-size: 17px;
+
+    pointer-events: auto;
 }
 
-.hud-label {
-    display: block;
+/* =========================
+   PANELS
+========================= */
 
-    margin-bottom: 5px;
+.panel {
+    width: min(430px, 88vw);
 
-    font-size: 8px;
+    padding: 40px;
 
-    font-weight: 700;
+    text-align: center;
+
+    border-radius: 22px;
+
+    background:
+        rgba(5,9,20,.85);
+
+    border:
+        1px solid rgba(255,255,255,.15);
+
+    backdrop-filter: blur(15px);
+}
+
+.panel h1 {
+    font-size: 42px;
+
+    letter-spacing: 4px;
+
+    margin-bottom: 25px;
+}
+
+.panel p {
+    font-size: 11px;
 
     letter-spacing: 3px;
 
-    opacity: 0.48;
+    opacity: .55;
 }
 
-#score,
-#speed,
-#coins {
-    font-size: 21px;
+.final-score {
+    margin: 10px 0 25px;
+
+    font-size: 50px;
+
+    font-weight: 900;
+}
+
+/* =========================
+   MOBILE
+========================= */
+
+#mobile-controls {
+    position: fixed;
+
+    left: 0;
+    right: 0;
+    bottom: 18px;
+
+    display: none;
+
+    justify-content: space-between;
+
+    padding: 0 18px;
+
+    z-index: 15;
+
+    pointer-events: none;
+}
+
+.drive-button {
+    width: 68px;
+    height: 68px;
+
+    border-radius: 18px;
+
+    background:
+        rgba(0,0,0,.5);
+
+    color: white;
+
+    border:
+        1px solid rgba(255,255,255,.2);
 
     font-weight: 900;
 
-    letter-spacing: 1px;
+    pointer-events: auto;
+
+    touch-action: none;
 }
 
+.drive-button.brake {
+    width: 75px;
+    font-size: 10px;
+}
 
-/* =========================================================
-   MOBILE
-========================================================= */
+.drive-button.nitro {
+    width: 75px;
+    font-size: 10px;
+}
 
-@media (max-width: 600px) {
+/* =========================
+   SMALL SCREENS
+========================= */
 
-    .hud-top {
-        padding: 12px;
+@media (max-width: 700px) {
+
+    #mobile-controls {
+        display: flex;
     }
 
-    .hud-card {
-        min-width: 85px;
-
-        padding: 8px 9px;
-
-        border-radius: 10px;
+    #hud {
+        top: 10px;
+        left: 10px;
+        right: 10px;
     }
 
-    .hud-label {
-        font-size: 7px;
-
-        letter-spacing: 1.5px;
+    .hud-item {
+        min-width: auto;
+        padding: 8px 10px;
     }
 
-    #score,
-    #speed,
-    #coins {
+    .hud-item strong {
         font-size: 14px;
     }
 
+    .controls {
+        grid-template-columns: 1fr;
+    }
+
+    .menu-box {
+        padding: 30px 22px;
+    }
 }
