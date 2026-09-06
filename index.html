@@ -1,20 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
 
     <meta
         name="viewport"
-        content="width=device-width, initial-scale=1.0"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     >
 
     <meta
         name="description"
         content="ROAD RUSH: INFINITE - An endless 3D driving experience."
     >
+
     <link
-          rel="stylesheet" 
-          href="./src/style.css"
+        rel="stylesheet"
+        href="./src/style.css"
     >
 
     <title>ROAD RUSH: INFINITE</title>
@@ -24,7 +26,9 @@
 
     <div id="game"></div>
 
+    <!-- LOADING -->
     <div id="loading-screen">
+
         <div class="loading-content">
 
             <div class="game-logo">
@@ -47,32 +51,194 @@
             </div>
 
         </div>
+
     </div>
 
-    <div id="hud">
 
-        <div class="hud-top">
+    <!-- MAIN MENU -->
+    <div id="main-menu" class="screen">
 
-            <div class="hud-card">
-                <span class="hud-label">SCORE</span>
-                <span id="score">0</span>
+        <div class="menu-box">
+
+            <div class="menu-title">
+                ROAD RUSH
             </div>
 
-            <div class="hud-card">
-                <span class="hud-label">SPEED</span>
-                <span>
-                    <span id="speed">0</span> KM/H
-                </span>
+            <div class="menu-subtitle">
+                INFINITE
             </div>
 
-            <div class="hud-card">
-                <span class="hud-label">COINS</span>
-                <span id="coins">0</span>
+            <button id="start-btn" class="menu-btn primary">
+                START RACE
+            </button>
+
+            <button id="theme-btn" class="menu-btn">
+                THEME: NIGHT CITY
+            </button>
+
+            <div class="controls-help">
+                <span>W / ↑</span> ACCELERATE
+                <span>A / D</span> STEER
+                <span>S / ↓</span> BRAKE
             </div>
 
         </div>
 
     </div>
+
+
+    <!-- HUD -->
+    <div id="hud">
+
+        <div class="hud-top">
+
+            <div class="hud-card">
+                <span class="hud-label">
+                    SCORE
+                </span>
+
+                <span id="score">
+                    0
+                </span>
+            </div>
+
+
+            <div class="hud-card">
+
+                <span class="hud-label">
+                    SPEED
+                </span>
+
+                <span>
+                    <span id="speed">
+                        0
+                    </span>
+                    KM/H
+                </span>
+
+            </div>
+
+
+            <div class="hud-card">
+
+                <span class="hud-label">
+                    COINS
+                </span>
+
+                <span id="coins">
+                    0
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <button
+            id="pause-btn"
+            class="pause-btn"
+        >
+            II
+        </button>
+
+    </div>
+
+
+    <!-- PAUSE -->
+    <div id="pause-screen" class="screen hidden">
+
+        <div class="menu-box">
+
+            <div class="menu-title small">
+                PAUSED
+            </div>
+
+            <button id="resume-btn" class="menu-btn primary">
+                RESUME
+            </button>
+
+            <button id="restart-btn" class="menu-btn">
+                RESTART
+            </button>
+
+            <button id="quit-btn" class="menu-btn danger">
+                END RUN
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- GAME OVER -->
+    <div id="game-over" class="screen hidden">
+
+        <div class="menu-box">
+
+            <div class="game-over-title">
+                RUN OVER
+            </div>
+
+            <div class="final-score">
+                SCORE
+                <strong id="final-score">
+                    0
+                </strong>
+            </div>
+
+            <button
+                id="game-restart-btn"
+                class="menu-btn primary"
+            >
+                RESTART
+            </button>
+
+            <button
+                id="menu-btn"
+                class="menu-btn"
+            >
+                MAIN MENU
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- MOBILE CONTROLS -->
+
+    <div id="mobile-controls">
+
+        <button
+            id="left-control"
+            class="control-btn"
+        >
+            ◀
+        </button>
+
+        <button
+            id="brake-control"
+            class="control-btn brake"
+        >
+            ■
+        </button>
+
+        <button
+            id="nitro-control"
+            class="control-btn nitro"
+        >
+            ⚡
+        </button>
+
+        <button
+            id="right-control"
+            class="control-btn"
+        >
+            ▶
+        </button>
+
+    </div>
+
 
     <script
         type="module"
@@ -80,4 +246,5 @@
     ></script>
 
 </body>
+
 </html>
