@@ -4,90 +4,30 @@ import * as THREE from
 
 /* =========================================================
    ROAD RUSH: INFINITE
-   STAGE 5
-   Traffic + Steering + Pedestrians + VFX + Audio
+   CLEAN STABLE VERSION
 ========================================================= */
 
 
 /* =========================================================
-   BASIC SETUP
+   DOM
 ========================================================= */
 
-const scene = new THREE.Scene();
+const $ = id => document.getElementById(id);
 
-scene.background = new THREE.Color(0x050914);
+const game = $("game");
 
-scene.fog = new THREE.FogExp2(
-    0x050914,
-    0.006
-);
+const loadingScreen = $("loading-screen");
+const loadingText = $("loading-text");
+const loadingProgress = $("loading-progress");
 
+const mainMenu = $("main-menu");
+const pauseScreen = $("pause-screen");
+const gameOverScreen = $("game-over");
 
-const camera = new THREE.PerspectiveCamera(
-    65,
-    window.innerWidth / window.innerHeight,
-    0.1,
-    3000
-);
-
-camera.position.set(
-    0,
-    5,
-    10
-);
-
-
-const renderer = new THREE.WebGLRenderer({
-    antialias: true,
-    powerPreference: "high-performance"
-});
-
-renderer.setSize(
-    window.innerWidth,
-    window.innerHeight
-);
-
-renderer.setPixelRatio(
-    Math.min(window.devicePixelRatio, 1.7)
-);
-
-renderer.shadowMap.enabled = true;
-
-renderer.outputColorSpace =
-    THREE.SRGBColorSpace;
-
-document
-    .getElementById("game")
-    .appendChild(renderer.domElement);
-
-
-/* =========================================================
-   LIGHTING
-========================================================= */
-
-const hemisphere = new THREE.HemisphereLight(
-    0x6c8cff,
-    0x090b12,
-    1.5
-);
-
-scene.add(hemisphere);
-
-
-const moon = new THREE.DirectionalLight(
-    0xb8c9ff,
-    2
-);
-
-moon.position.set(
-    -50,
-    100,
-    50
-);
-
-moon.castShadow = true;
-
-scene.add(moon);
+const scoreEl = $("score");
+const speedEl = $("speed");
+const coinsEl = $("coins");
+const finalScoreEl = $("final-score");
 
 
 /* =========================================================
@@ -103,25 +43,112 @@ const STATE = {
 
 let gameState = STATE.MENU;
 
+
+/* =========================================================
+   GAME VARIABLES
+========================================================= */
+
 let speed = 0;
-
-let maxSpeed = 82;
-
 let score = 0;
-
 let coins = 0;
-
 let nitro = 100;
 
+const MAX_SPEED = 82;
+const NITRO_MAX_SPEED = 115;
+
 let steering = 0;
+let nitroHeld = false;
 
-let accelerate = false;
 
-let brake = false;
+/* =========================================================
+   THREE.JS
+========================================================= */
 
-let nitroPressed = false;
+const scene = new THREE.Scene();
 
-let audioStarted = false;
+scene.background =
+    new THREE.Color(0x050914);
+
+scene.fog =
+    new THREE.FogExp2(
+        0x050914,
+        0.007
+    );
+
+
+const camera =
+    new THREE.PerspectiveCamera(
+        65,
+        window.innerWidth /
+        window.innerHeight,
+        0.1,
+        3000
+    );
+
+camera.position.set(
+    0,
+    5,
+    11
+);
+
+
+const renderer =
+    new THREE.WebGLRenderer({
+        antialias: true,
+        powerPreference: "high-performance"
+    });
+
+renderer.setSize(
+    window.innerWidth,
+    window.innerHeight
+);
+
+renderer.setPixelRatio(
+    Math.min(
+        window.devicePixelRatio || 1,
+        1.5
+    )
+);
+
+renderer.shadowMap.enabled = true;
+
+renderer.outputColorSpace =
+    THREE.SRGBColorSpace;
+
+game.appendChild(
+    renderer.domElement
+);
+
+
+/* =========================================================
+   LIGHTING
+========================================================= */
+
+const ambient =
+    new THREE.HemisphereLight(
+        0x8aa4ff,
+        0x111111,
+        1.8
+    );
+
+scene.add(ambient);
+
+
+const moon =
+    new THREE.DirectionalLight(
+        0xffffff,
+        2
+    );
+
+moon.position.set(
+    -40,
+    80,
+    30
+);
+
+moon.castShadow = true;
+
+scene.add(moon);
 
 
 /* =========================================================
@@ -129,25 +156,29 @@ let audioStarted = false;
 ========================================================= */
 
 const ROAD_WIDTH = 15;
+const WORLD_LENGTH = 2200;
 
-const ROAD_LENGTH = 2400;
+const roadMaterial =
+    new THREE.MeshStandardMaterial({
+        color: 0x151820,
+        roughness: .9
+    });
 
-const roadMaterial = new THREE.MeshStandardMaterial({
-    color: 0x151820,
-    roughness: .92
-});
 
-const road = new THREE.Mesh(
-    new THREE.PlaneGeometry(
-        ROAD_WIDTH,
-        ROAD_LENGTH
-    ),
-    roadMaterial
-);
+const road =
+    new THREE.Mesh(
+        new THREE.PlaneGeometry(
+            ROAD_WIDTH,
+            WORLD_LENGTH
+        ),
+        roadMaterial
+    );
 
-road.rotation.x = -Math.PI / 2;
+road.rotation.x =
+    -Math.PI / 2;
 
-road.position.z = -1100;
+road.position.z =
+    -1050;
 
 road.receiveShadow = true;
 
@@ -155,28 +186,33 @@ scene.add(road);
 
 
 /* =========================================================
-   CITY GROUND
+   GROUND
 ========================================================= */
 
 const groundMaterial =
     new THREE.MeshStandardMaterial({
-        color: 0x101b17,
+        color: 0x101817,
         roughness: 1
     });
 
-const ground = new THREE.Mesh(
-    new THREE.PlaneGeometry(
-        160,
-        ROAD_LENGTH
-    ),
-    groundMaterial
-);
 
-ground.rotation.x = -Math.PI / 2;
+const ground =
+    new THREE.Mesh(
+        new THREE.PlaneGeometry(
+            150,
+            WORLD_LENGTH
+        ),
+        groundMaterial
+    );
 
-ground.position.y = -.08;
+ground.rotation.x =
+    -Math.PI / 2;
 
-ground.position.z = -1100;
+ground.position.y =
+    -.08;
+
+ground.position.z =
+    -1050;
 
 scene.add(ground);
 
@@ -185,27 +221,24 @@ scene.add(ground);
    SIDEWALKS
 ========================================================= */
 
-const sidewalkMaterial =
-    new THREE.MeshStandardMaterial({
-        color: 0x3b3e45
-    });
+for (const x of [-8.7, 8.7]) {
 
-
-for (const x of [-8.6, 8.6]) {
-
-    const sidewalk = new THREE.Mesh(
-        new THREE.BoxGeometry(
-            2.2,
-            .18,
-            ROAD_LENGTH
-        ),
-        sidewalkMaterial
-    );
+    const sidewalk =
+        new THREE.Mesh(
+            new THREE.BoxGeometry(
+                2.3,
+                .18,
+                WORLD_LENGTH
+            ),
+            new THREE.MeshStandardMaterial({
+                color: 0x393c43
+            })
+        );
 
     sidewalk.position.set(
         x,
         .08,
-        -1100
+        -1050
     );
 
     scene.add(sidewalk);
@@ -225,25 +258,28 @@ const markerMaterial =
 
 
 for (
-    let z = 40;
-    z > -2300;
-    z -= 11
+    let z = 30;
+    z > -2200;
+    z -= 12
 ) {
 
-    for (const x of [-2.5, 2.5]) {
+    for (
+        const x of [-2.5, 2.5]
+    ) {
 
-        const marker = new THREE.Mesh(
-            new THREE.BoxGeometry(
-                .18,
-                .03,
-                5
-            ),
-            markerMaterial
-        );
+        const marker =
+            new THREE.Mesh(
+                new THREE.BoxGeometry(
+                    .18,
+                    .035,
+                    5
+                ),
+                markerMaterial
+            );
 
         marker.position.set(
             x,
-            .03,
+            .025,
             z
         );
 
@@ -255,118 +291,17 @@ for (
 
 
 /* =========================================================
-   STREET LIGHTS
-========================================================= */
-
-const worldObjects = [];
-
-function createStreetLight(x, z) {
-
-    const group = new THREE.Group();
-
-    const pole = new THREE.Mesh(
-        new THREE.CylinderGeometry(
-            .07,
-            .1,
-            7
-        ),
-        new THREE.MeshStandardMaterial({
-            color: 0x292d36
-        })
-    );
-
-    pole.position.y = 3.5;
-
-    group.add(pole);
-
-
-    const arm = new THREE.Mesh(
-        new THREE.BoxGeometry(
-            1.4,
-            .08,
-            .08
-        ),
-        new THREE.MeshStandardMaterial({
-            color: 0x292d36
-        })
-    );
-
-    arm.position.set(
-        x < 0 ? .65 : -.65,
-        6.8,
-        0
-    );
-
-    group.add(arm);
-
-
-    const lamp = new THREE.Mesh(
-        new THREE.SphereGeometry(
-            .13,
-            8,
-            8
-        ),
-        new THREE.MeshBasicMaterial({
-            color: 0xffe8a0
-        })
-    );
-
-    lamp.position.set(
-        x < 0 ? 1.25 : -1.25,
-        6.7,
-        0
-    );
-
-    group.add(lamp);
-
-
-    const light = new THREE.PointLight(
-        0xffdd99,
-        4,
-        22
-    );
-
-    light.position.copy(
-        lamp.position
-    );
-
-    group.add(light);
-
-
-    group.position.set(
-        x,
-        0,
-        z
-    );
-
-    scene.add(group);
-
-    worldObjects.push(group);
-}
-
-
-for (
-    let z = 20;
-    z > -2200;
-    z -= 35
-) {
-
-    createStreetLight(-9.4, z);
-
-    createStreetLight(9.4, z - 17);
-}
-
-
-/* =========================================================
    BUILDINGS
 ========================================================= */
+
+const movingObjects = [];
 
 const buildingColors = [
     0x182238,
     0x202838,
-    0x26253a,
+    0x25243a,
     0x182b34,
-    0x2b2638
+    0x30253a
 ];
 
 
@@ -387,8 +322,9 @@ function createBuilding(x, z) {
     const height =
         THREE.MathUtils.randFloat(
             9,
-            32
+            30
         );
+
 
     const material =
         new THREE.MeshStandardMaterial({
@@ -402,14 +338,17 @@ function createBuilding(x, z) {
             roughness: .9
         });
 
-    const building = new THREE.Mesh(
-        new THREE.BoxGeometry(
-            width,
-            height,
-            depth
-        ),
-        material
-    );
+
+    const building =
+        new THREE.Mesh(
+            new THREE.BoxGeometry(
+                width,
+                height,
+                depth
+            ),
+            material
+        );
+
 
     building.position.set(
         x,
@@ -419,14 +358,26 @@ function createBuilding(x, z) {
 
     scene.add(building);
 
-    worldObjects.push(building);
+    movingObjects.push(building);
 
 
     /* WINDOWS */
 
+    const windowMaterial =
+        new THREE.MeshBasicMaterial({
+            color: 0xffd76a
+        });
+
+
+    const rows =
+        Math.floor(
+            height / 2
+        );
+
+
     for (
         let row = 0;
-        row < Math.floor(height / 2);
+        row < rows;
         row++
     ) {
 
@@ -436,40 +387,43 @@ function createBuilding(x, z) {
             col++
         ) {
 
-            const windowMesh =
+            if (
+                Math.random() < .25
+            ) {
+                continue;
+            }
+
+            const window =
                 new THREE.Mesh(
                     new THREE.BoxGeometry(
-                        .45,
+                        .5,
                         .3,
                         .04
                     ),
-                    new THREE.MeshBasicMaterial({
-                        color:
-                            Math.random() > .35
-                                ? 0xffd66b
-                                : 0x23334c
-                    })
+                    windowMaterial
                 );
 
-            windowMesh.position.set(
-                x - width * .25 +
-                col * width * .25,
+            window.position.set(
+                x - width * .28 +
+                col * width * .28,
                 1.5 + row * 2,
                 z - depth / 2 - .03
             );
 
-            scene.add(windowMesh);
+            scene.add(window);
 
-            worldObjects.push(windowMesh);
+            movingObjects.push(
+                window
+            );
         }
     }
 }
 
 
 for (
-    let z = 10;
+    let z = 0;
     z > -2200;
-    z -= 32
+    z -= 34
 ) {
 
     createBuilding(
@@ -485,12 +439,125 @@ for (
 
 
 /* =========================================================
+   STREET LIGHTS
+========================================================= */
+
+function createStreetLight(x, z) {
+
+    const group =
+        new THREE.Group();
+
+
+    const pole =
+        new THREE.Mesh(
+            new THREE.CylinderGeometry(
+                .07,
+                .1,
+                7,
+                8
+            ),
+            new THREE.MeshStandardMaterial({
+                color: 0x292d36
+            })
+        );
+
+    pole.position.y = 3.5;
+
+    group.add(pole);
+
+
+    const arm =
+        new THREE.Mesh(
+            new THREE.BoxGeometry(
+                1.4,
+                .08,
+                .08
+            ),
+            new THREE.MeshStandardMaterial({
+                color: 0x292d36
+            })
+        );
+
+    arm.position.set(
+        x < 0 ? .65 : -.65,
+        6.8,
+        0
+    );
+
+    group.add(arm);
+
+
+    const lamp =
+        new THREE.Mesh(
+            new THREE.SphereGeometry(
+                .14,
+                8,
+                8
+            ),
+            new THREE.MeshBasicMaterial({
+                color: 0xffe6a0
+            })
+        );
+
+    lamp.position.set(
+        x < 0 ? 1.25 : -1.25,
+        6.7,
+        0
+    );
+
+    group.add(lamp);
+
+
+    const light =
+        new THREE.PointLight(
+            0xffdd99,
+            4,
+            24
+        );
+
+    light.position.copy(
+        lamp.position
+    );
+
+    group.add(light);
+
+
+    group.position.set(
+        x,
+        0,
+        z
+    );
+
+    scene.add(group);
+
+    movingObjects.push(group);
+}
+
+
+for (
+    let z = 10;
+    z > -2200;
+    z -= 38
+) {
+
+    createStreetLight(
+        -9.5,
+        z
+    );
+
+    createStreetLight(
+        9.5,
+        z - 19
+    );
+}
+
+
+/* =========================================================
    PLAYER CAR
 ========================================================= */
 
-const player = new THREE.Group();
-
-scene.add(player);
+const player =
+    new THREE.Group();
 
 player.position.set(
     0,
@@ -498,33 +565,36 @@ player.position.set(
     4
 );
 
+scene.add(player);
 
-const carBodyMaterial =
+
+const playerBodyMaterial =
     new THREE.MeshStandardMaterial({
-        color: 0xd71930,
+        color: 0xe51d38,
         metalness: .55,
         roughness: .28
     });
 
 
-const carDarkMaterial =
+const darkMaterial =
     new THREE.MeshStandardMaterial({
         color: 0x11151d,
-        metalness: .7,
+        metalness: .65,
         roughness: .2
     });
 
 
-/* body */
+/* BODY */
 
-const body = new THREE.Mesh(
-    new THREE.BoxGeometry(
-        2.5,
-        .55,
-        4.5
-    ),
-    carBodyMaterial
-);
+const body =
+    new THREE.Mesh(
+        new THREE.BoxGeometry(
+            2.5,
+            .55,
+            4.5
+        ),
+        playerBodyMaterial
+    );
 
 body.position.y = .65;
 
@@ -533,16 +603,17 @@ body.castShadow = true;
 player.add(body);
 
 
-/* hood */
+/* HOOD */
 
-const hood = new THREE.Mesh(
-    new THREE.BoxGeometry(
-        2.1,
-        .18,
-        1.4
-    ),
-    carBodyMaterial
-);
+const hood =
+    new THREE.Mesh(
+        new THREE.BoxGeometry(
+            2.1,
+            .18,
+            1.4
+        ),
+        playerBodyMaterial
+    );
 
 hood.position.set(
     0,
@@ -553,16 +624,17 @@ hood.position.set(
 player.add(hood);
 
 
-/* cabin */
+/* CABIN */
 
-const cabin = new THREE.Mesh(
-    new THREE.BoxGeometry(
-        1.75,
-        .65,
-        1.7
-    ),
-    carDarkMaterial
-);
+const cabin =
+    new THREE.Mesh(
+        new THREE.BoxGeometry(
+            1.75,
+            .65,
+            1.7
+        ),
+        darkMaterial
+    );
 
 cabin.position.set(
     0,
@@ -573,13 +645,17 @@ cabin.position.set(
 player.add(cabin);
 
 
-/* wheels */
+/* WHEELS */
 
 const wheels = [];
 
-for (const x of [-1.2, 1.2]) {
+for (
+    const x of [-1.2, 1.2]
+) {
 
-    for (const z of [-1.45, 1.45]) {
+    for (
+        const z of [-1.45, 1.45]
+    ) {
 
         const wheel =
             new THREE.Mesh(
@@ -590,7 +666,7 @@ for (const x of [-1.2, 1.2]) {
                     16
                 ),
                 new THREE.MeshStandardMaterial({
-                    color: 0x090909
+                    color: 0x070707
                 })
             );
 
@@ -612,11 +688,11 @@ for (const x of [-1.2, 1.2]) {
 }
 
 
-/* headlights */
+/* HEADLIGHTS */
 
-const headlights = [];
-
-for (const x of [-.75, .75]) {
+for (
+    const x of [-.75, .75]
+) {
 
     const lamp =
         new THREE.Mesh(
@@ -639,7 +715,7 @@ for (const x of [-.75, .75]) {
     player.add(lamp);
 
 
-    const beam =
+    const light =
         new THREE.SpotLight(
             0xffffff,
             8,
@@ -648,28 +724,28 @@ for (const x of [-.75, .75]) {
             .5
         );
 
-    beam.position.set(
+    light.position.set(
         x,
         .9,
         -2
     );
 
-    beam.target.position.set(
+    light.target.position.set(
         x,
         0,
         -30
     );
 
-    player.add(beam);
+    player.add(light);
 
-    player.add(beam.target);
-
-    headlights.push(beam);
+    player.add(
+        light.target
+    );
 }
 
 
 /* =========================================================
-   TRAFFIC CARS
+   TRAFFIC
 ========================================================= */
 
 const traffic = [];
@@ -680,14 +756,24 @@ const trafficColors = [
     0xffffff,
     0x25b87b,
     0xa44cff,
-    0xff6b25,
-    0xb7bcc7
+    0xff6b25
+];
+
+
+const lanes = [
+    -5,
+    -2.5,
+    0,
+    2.5,
+    5
 ];
 
 
 function createTrafficCar() {
 
-    const car = new THREE.Group();
+    const car =
+        new THREE.Group();
+
 
     const color =
         trafficColors[
@@ -728,10 +814,7 @@ function createTrafficCar() {
                 .55,
                 1.7
             ),
-            new THREE.MeshStandardMaterial({
-                color: 0x11151c,
-                metalness: .5
-            })
+            darkMaterial
         );
 
     roof.position.set(
@@ -743,9 +826,13 @@ function createTrafficCar() {
     car.add(roof);
 
 
-    for (const x of [-1.1, 1.1]) {
+    for (
+        const x of [-1.1, 1.1]
+    ) {
 
-        for (const z of [-1.3, 1.3]) {
+        for (
+            const z of [-1.3, 1.3]
+        ) {
 
             const wheel =
                 new THREE.Mesh(
@@ -756,7 +843,7 @@ function createTrafficCar() {
                         12
                     ),
                     new THREE.MeshStandardMaterial({
-                        color: 0x080808
+                        color: 0x050505
                     })
                 );
 
@@ -774,26 +861,17 @@ function createTrafficCar() {
     }
 
 
-    const lane =
-        [-5, -2.5, 0, 2.5, 5][
-            Math.floor(
-                Math.random() * 5
-            )
-        ];
-
-
-    car.position.set(
-        lane,
-        .45,
-        -Math.random() * 500 - 80
-    );
-
-
-    car.userData.speed =
+    car.userData.relativeSpeed =
         THREE.MathUtils.randFloat(
             .35,
-            .7
+            .8
         );
+
+
+    resetTrafficCar(
+        car,
+        true
+    );
 
 
     scene.add(car);
@@ -802,7 +880,38 @@ function createTrafficCar() {
 }
 
 
-for (let i = 0; i < 13; i++) {
+function resetTrafficCar(
+    car,
+    initial = false
+) {
+
+    car.position.x =
+        lanes[
+            Math.floor(
+                Math.random() *
+                lanes.length
+            )
+        ];
+
+
+    car.position.y = .45;
+
+
+    car.position.z =
+        initial
+            ? -80 -
+              Math.random() * 600
+            : -250 -
+              Math.random() * 650;
+}
+
+
+for (
+    let i = 0;
+    i < 16;
+    i++
+) {
+
     createTrafficCar();
 }
 
@@ -816,7 +925,8 @@ const pedestrians = [];
 
 function createPerson(x, z) {
 
-    const person = new THREE.Group();
+    const person =
+        new THREE.Group();
 
 
     const shirtColors = [
@@ -860,7 +970,7 @@ function createPerson(x, z) {
                 8
             ),
             new THREE.MeshStandardMaterial({
-                color: 0xd6a078
+                color: 0xd49b78
             })
         );
 
@@ -875,26 +985,42 @@ function createPerson(x, z) {
         });
 
 
-    for (const xOffset of [-.09, .09]) {
-
-        const leg =
-            new THREE.Mesh(
-                new THREE.BoxGeometry(
-                    .1,
-                    .55,
-                    .12
-                ),
-                legMaterial
-            );
-
-        leg.position.set(
-            xOffset,
-            .28,
-            0
+    const leftLeg =
+        new THREE.Mesh(
+            new THREE.BoxGeometry(
+                .1,
+                .55,
+                .12
+            ),
+            legMaterial
         );
 
-        person.add(leg);
-    }
+    leftLeg.position.set(
+        -.09,
+        .28,
+        0
+    );
+
+
+    const rightLeg =
+        new THREE.Mesh(
+            new THREE.BoxGeometry(
+                .1,
+                .55,
+                .12
+            ),
+            legMaterial
+        );
+
+    rightLeg.position.set(
+        .09,
+        .28,
+        0
+    );
+
+
+    person.add(leftLeg);
+    person.add(rightLeg);
 
 
     person.position.set(
@@ -903,8 +1029,12 @@ function createPerson(x, z) {
         z
     );
 
-    person.userData.walkOffset =
-        Math.random() * Math.PI * 2;
+
+    person.userData.phase =
+        Math.random() *
+        Math.PI *
+        2;
+
 
     person.userData.walkSpeed =
         THREE.MathUtils.randFloat(
@@ -922,17 +1052,17 @@ function createPerson(x, z) {
 for (
     let z = 0;
     z > -1800;
-    z -= 24
+    z -= 25
 ) {
 
     createPerson(
-        -8.1,
+        -8.15,
         z
     );
 
     createPerson(
-        8.1,
-        z - 10
+        8.15,
+        z - 12
     );
 }
 
@@ -941,29 +1071,38 @@ for (
    SPEED PARTICLES
 ========================================================= */
 
-const particleGeometry =
-    new THREE.BufferGeometry();
+const particleCount = 160;
 
-const particleCount = 180;
-
-const positions =
+const particlePositions =
     new Float32Array(
         particleCount * 3
     );
 
 
-for (let i = 0; i < particleCount; i++) {
+for (
+    let i = 0;
+    i < particleCount;
+    i++
+) {
 
-    positions[i * 3] =
-        THREE.MathUtils.randFloatSpread(18);
-
-    positions[i * 3 + 1] =
-        THREE.MathUtils.randFloat(
-            .2,
-            6
+    particlePositions[
+        i * 3
+    ] =
+        THREE.MathUtils.randFloatSpread(
+            18
         );
 
-    positions[i * 3 + 2] =
+    particlePositions[
+        i * 3 + 1
+    ] =
+        THREE.MathUtils.randFloat(
+            .2,
+            5
+        );
+
+    particlePositions[
+        i * 3 + 2
+    ] =
         THREE.MathUtils.randFloat(
             -100,
             10
@@ -971,10 +1110,13 @@ for (let i = 0; i < particleCount; i++) {
 }
 
 
+const particleGeometry =
+    new THREE.BufferGeometry();
+
 particleGeometry.setAttribute(
     "position",
     new THREE.BufferAttribute(
-        positions,
+        particlePositions,
         3
     )
 );
@@ -982,7 +1124,7 @@ particleGeometry.setAttribute(
 
 const particleMaterial =
     new THREE.PointsMaterial({
-        color: 0x9dbaff,
+        color: 0xaec5ff,
         size: .08,
         transparent: true,
         opacity: .5
@@ -999,7 +1141,7 @@ scene.add(particles);
 
 
 /* =========================================================
-   NITRO FLAME
+   NITRO
 ========================================================= */
 
 const nitroFlame =
@@ -1010,11 +1152,12 @@ const nitroFlame =
             12
         ),
         new THREE.MeshBasicMaterial({
-            color: 0x47aaff,
+            color: 0x4aaaff,
             transparent: true,
             opacity: .9
         })
     );
+
 
 nitroFlame.rotation.x =
     Math.PI / 2;
@@ -1022,7 +1165,7 @@ nitroFlame.rotation.x =
 nitroFlame.position.set(
     0,
     .55,
-    2.4
+    2.5
 );
 
 nitroFlame.visible = false;
@@ -1041,14 +1184,40 @@ window.addEventListener(
     "keydown",
     event => {
 
-        keys[event.key.toLowerCase()] =
-            true;
+        keys[
+            event.key.toLowerCase()
+        ] = true;
+
 
         if (
-            event.key === "Escape" &&
-            gameState === STATE.PLAYING
+            event.code === "Space"
         ) {
-            pauseGame();
+
+            event.preventDefault();
+
+            keys.space = true;
+        }
+
+
+        if (
+            event.key === "Escape"
+        ) {
+
+            if (
+                gameState ===
+                STATE.PLAYING
+            ) {
+
+                pauseGame();
+
+            }
+            else if (
+                gameState ===
+                STATE.PAUSED
+            ) {
+
+                resumeGame();
+            }
         }
     }
 );
@@ -1058,21 +1227,33 @@ window.addEventListener(
     "keyup",
     event => {
 
-        keys[event.key.toLowerCase()] =
-            false;
+        keys[
+            event.key.toLowerCase()
+        ] = false;
+
+
+        if (
+            event.code === "Space"
+        ) {
+
+            keys.space = false;
+        }
     }
 );
 
 
 /* =========================================================
-   MOBILE BUTTON HELPER
+   MOBILE CONTROLS
 ========================================================= */
 
 function holdButton(
     element,
-    onStart,
-    onEnd
+    start,
+    end
 ) {
+
+    if (!element) return;
+
 
     element.addEventListener(
         "pointerdown",
@@ -1080,7 +1261,11 @@ function holdButton(
 
             event.preventDefault();
 
-            onStart();
+            element.setPointerCapture(
+                event.pointerId
+            );
+
+            start();
         }
     );
 
@@ -1091,60 +1276,55 @@ function holdButton(
 
             event.preventDefault();
 
-            onEnd();
+            end();
         }
     );
 
 
     element.addEventListener(
-        "pointerleave",
-        onEnd
+        "pointercancel",
+        end
     );
 
+
     element.addEventListener(
-        "pointercancel",
-        onEnd
+        "lostpointercapture",
+        end
     );
 }
 
 
 holdButton(
-    document.getElementById(
-        "left-control"
-    ),
+    $("left-control"),
     () => steering = -1,
     () => {
-        if (steering < 0) steering = 0;
+        if (steering < 0)
+            steering = 0;
     }
 );
 
 
 holdButton(
-    document.getElementById(
-        "right-control"
-    ),
+    $("right-control"),
     () => steering = 1,
     () => {
-        if (steering > 0) steering = 0;
+        if (steering > 0)
+            steering = 0;
     }
 );
 
 
 holdButton(
-    document.getElementById(
-        "brake-control"
-    ),
-    () => brake = true,
-    () => brake = false
+    $("brake-control"),
+    () => keys.s = true,
+    () => keys.s = false
 );
 
 
 holdButton(
-    document.getElementById(
-        "nitro-control"
-    ),
-    () => nitroPressed = true,
-    () => nitroPressed = false
+    $("nitro-control"),
+    () => nitroHeld = true,
+    () => nitroHeld = false
 );
 
 
@@ -1152,28 +1332,48 @@ holdButton(
    AUDIO
 ========================================================= */
 
-let audioContext;
+let audioContext = null;
 
-let engineOscillator;
+let engineOscillator = null;
+let engineGain = null;
 
-let engineGain;
-
-let musicOscillator;
-
-let musicGain;
+let musicOscillator = null;
+let musicGain = null;
 
 
 function startAudio() {
 
-    if (audioStarted) return;
+    if (
+        audioContext
+    ) {
 
-    audioStarted = true;
+        if (
+            audioContext.state ===
+            "suspended"
+        ) {
+
+            audioContext.resume();
+        }
+
+        return;
+    }
+
+
+    const AudioContextClass =
+        window.AudioContext ||
+        window.webkitAudioContext;
+
+
+    if (
+        !AudioContextClass
+    ) {
+        return;
+    }
+
 
     audioContext =
-        new AudioContext();
+        new AudioContextClass();
 
-
-    /* engine */
 
     engineOscillator =
         audioContext.createOscillator();
@@ -1181,14 +1381,16 @@ function startAudio() {
     engineGain =
         audioContext.createGain();
 
+
     engineOscillator.type =
         "sawtooth";
 
     engineOscillator.frequency.value =
-        65;
+        55;
 
     engineGain.gain.value =
-        .025;
+        .015;
+
 
     engineOscillator.connect(
         engineGain
@@ -1201,13 +1403,12 @@ function startAudio() {
     engineOscillator.start();
 
 
-    /* background tone */
-
     musicOscillator =
         audioContext.createOscillator();
 
     musicGain =
         audioContext.createGain();
+
 
     musicOscillator.type =
         "sine";
@@ -1216,7 +1417,8 @@ function startAudio() {
         110;
 
     musicGain.gain.value =
-        .008;
+        .006;
+
 
     musicOscillator.connect(
         musicGain
@@ -1232,85 +1434,39 @@ function startAudio() {
 
 function updateAudio() {
 
-    if (!audioStarted) return;
-
-    const speedRatio =
-        speed / maxSpeed;
-
-    engineOscillator.frequency.setTargetAtTime(
-        55 + speedRatio * 150,
-        audioContext.currentTime,
-        .04
-    );
-
-    engineGain.gain.setTargetAtTime(
-        .018 + speedRatio * .045,
-        audioContext.currentTime,
-        .06
-    );
-}
-
-
-/* =========================================================
-   COLLISION
-========================================================= */
-
-function checkCollision() {
-
-    for (const car of traffic) {
-
-        const dx =
-            Math.abs(
-                player.position.x -
-                car.position.x
-            );
-
-        const dz =
-            Math.abs(
-                player.position.z -
-                car.position.z
-            );
-
-
-        if (
-            dx < 2.05 &&
-            dz < 3
-        ) {
-
-            gameOver();
-
-            return true;
-        }
+    if (
+        !audioContext ||
+        !engineOscillator
+    ) {
+        return;
     }
 
-    return false;
-}
+
+    const ratio =
+        speed /
+        MAX_SPEED;
 
 
-/* =========================================================
-   RESET TRAFFIC
-========================================================= */
+    const now =
+        audioContext.currentTime;
 
-function resetTraffic() {
 
-    for (const car of traffic) {
+    engineOscillator.frequency
+        .setTargetAtTime(
+            55 +
+            ratio * 160,
+            now,
+            .04
+        );
 
-        car.position.x =
-            [-5, -2.5, 0, 2.5, 5][
-                Math.floor(
-                    Math.random() * 5
-                )
-            ];
 
-        car.position.z =
-            -Math.random() * 1000 - 100;
-
-        car.userData.speed =
-            THREE.MathUtils.randFloat(
-                .35,
-                .7
-            );
-    }
+    engineGain.gain
+        .setTargetAtTime(
+            .015 +
+            ratio * .04,
+            now,
+            .06
+        );
 }
 
 
@@ -1320,20 +1476,26 @@ function resetTraffic() {
 
 function startGame() {
 
+    startAudio();
+
+
     gameState =
         STATE.PLAYING;
 
-    score = 0;
-
-    coins = 0;
 
     speed = 0;
-
+    score = 0;
+    coins = 0;
     nitro = 100;
-
     steering = 0;
+    nitroHeld = false;
+
 
     player.position.x = 0;
+
+    player.position.y = .5;
+
+    player.position.z = 4;
 
     player.rotation.set(
         0,
@@ -1341,28 +1503,42 @@ function startGame() {
         0
     );
 
-    resetTraffic();
 
-    document
-        .getElementById("main-menu")
-        .classList.add("hidden");
+    resetAllTraffic();
 
-    document
-        .getElementById("pause-screen")
-        .classList.add("hidden");
 
-    document
-        .getElementById("game-over")
-        .classList.add("hidden");
+    mainMenu.classList.add(
+        "hidden"
+    );
 
-    startAudio();
+    pauseScreen.classList.add(
+        "hidden"
+    );
 
-    if (
-        audioContext &&
-        audioContext.state === "suspended"
-    ) {
-        audioContext.resume();
-    }
+    gameOverScreen.classList.add(
+        "hidden"
+    );
+
+
+    updateHUD();
+}
+
+
+/* =========================================================
+   RESET TRAFFIC
+========================================================= */
+
+function resetAllTraffic() {
+
+    traffic.forEach(
+        car => {
+
+            resetTrafficCar(
+                car,
+                true
+            );
+        }
+    );
 }
 
 
@@ -1373,34 +1549,40 @@ function startGame() {
 function pauseGame() {
 
     if (
-        gameState !== STATE.PLAYING
+        gameState !==
+        STATE.PLAYING
     ) {
         return;
     }
 
+
     gameState =
         STATE.PAUSED;
 
-    document
-        .getElementById("pause-screen")
-        .classList.remove("hidden");
+
+    pauseScreen.classList.remove(
+        "hidden"
+    );
 }
 
 
 function resumeGame() {
 
     if (
-        gameState !== STATE.PAUSED
+        gameState !==
+        STATE.PAUSED
     ) {
         return;
     }
 
+
     gameState =
         STATE.PLAYING;
 
-    document
-        .getElementById("pause-screen")
-        .classList.add("hidden");
+
+    pauseScreen.classList.add(
+        "hidden"
+    );
 }
 
 
@@ -1411,43 +1593,36 @@ function resumeGame() {
 function gameOver() {
 
     if (
-        gameState === STATE.GAME_OVER
+        gameState ===
+        STATE.GAME_OVER
     ) {
         return;
     }
 
+
     gameState =
         STATE.GAME_OVER;
 
+
     speed = 0;
 
-    document
-        .getElementById("final-score")
-        .textContent =
-        Math.floor(score);
+    nitroFlame.visible =
+        false;
 
-    document
-        .getElementById("game-over")
-        .classList.remove("hidden");
+
+    finalScoreEl.textContent =
+        Math.floor(score)
+            .toLocaleString();
+
+
+    gameOverScreen.classList.remove(
+        "hidden"
+    );
 }
 
 
 /* =========================================================
-   RESTART
-========================================================= */
-
-function restartGame() {
-
-    document
-        .getElementById("game-over")
-        .classList.add("hidden");
-
-    startGame();
-}
-
-
-/* =========================================================
-   MENU
+   RETURN MENU
 ========================================================= */
 
 function returnToMenu() {
@@ -1455,263 +1630,118 @@ function returnToMenu() {
     gameState =
         STATE.MENU;
 
+
     speed = 0;
 
-    document
-        .getElementById("pause-screen")
-        .classList.add("hidden");
+    steering = 0;
 
-    document
-        .getElementById("game-over")
-        .classList.add("hidden");
+    nitroHeld = false;
 
-    document
-        .getElementById("main-menu")
-        .classList.remove("hidden");
+
+    pauseScreen.classList.add(
+        "hidden"
+    );
+
+    gameOverScreen.classList.add(
+        "hidden"
+    );
+
+    mainMenu.classList.remove(
+        "hidden"
+    );
 }
 
 
 /* =========================================================
-   THEME
+   PLAYER UPDATE
 ========================================================= */
-
-const themes = [
-    {
-        name: "NIGHT CITY",
-        sky: 0x050914,
-        fog: 0x050914,
-        road: 0x151820,
-        ground: 0x101b17
-    },
-
-    {
-        name: "NEON CITY",
-        sky: 0x130521,
-        fog: 0x130521,
-        road: 0x100d18,
-        ground: 0x180d20
-    },
-
-    {
-        name: "MIDNIGHT BLUE",
-        sky: 0x031326,
-        fog: 0x031326,
-        road: 0x111827,
-        ground: 0x071c1c
-    }
-];
-
-
-let currentTheme = 0;
-
-
-function applyTheme() {
-
-    const theme =
-        themes[currentTheme];
-
-    scene.background =
-        new THREE.Color(theme.sky);
-
-    scene.fog.color =
-        new THREE.Color(theme.fog);
-
-    roadMaterial.color =
-        new THREE.Color(theme.road);
-
-    groundMaterial.color =
-        new THREE.Color(theme.ground);
-
-    document
-        .getElementById("theme-btn")
-        .textContent =
-        `THEME: ${theme.name}`;
-}
-
-
-applyTheme();
-
-
-document
-    .getElementById("theme-btn")
-    .addEventListener(
-        "click",
-        () => {
-
-            currentTheme++;
-
-            if (
-                currentTheme >=
-                themes.length
-            ) {
-                currentTheme = 0;
-            }
-
-            applyTheme();
-        }
-    );
-
-
-/* =========================================================
-   BUTTON EVENTS
-========================================================= */
-
-document
-    .getElementById("start-btn")
-    .addEventListener(
-        "click",
-        startGame
-    );
-
-
-document
-    .getElementById("pause-btn")
-    .addEventListener(
-        "click",
-        pauseGame
-    );
-
-
-document
-    .getElementById("resume-btn")
-    .addEventListener(
-        "click",
-        resumeGame
-    );
-
-
-document
-    .getElementById("restart-btn")
-    .addEventListener(
-        "click",
-        restartGame
-    );
-
-
-document
-    .getElementById("quit-btn")
-    .addEventListener(
-        "click",
-        gameOver
-    );
-
-
-document
-    .getElementById("game-restart-btn")
-    .addEventListener(
-        "click",
-        restartGame
-    );
-
-
-document
-    .getElementById("menu-btn")
-    .addEventListener(
-        "click",
-        returnToMenu
-    );
-
-
-/* =========================================================
-   GAME UPDATE
-========================================================= */
-
-const clock =
-    new THREE.Clock();
-
 
 function updatePlayer(delta) {
 
-    accelerate =
-        keys["w"] ||
-        keys["arrowup"];
-
-    brake =
-        keys["s"] ||
-        keys["arrowdown"];
+    const accelerating =
+        keys.w ||
+        keys.arrowup;
 
 
-    let keyboardSteering = 0;
+    const braking =
+        keys.s ||
+        keys.arrowdown;
 
-    if (
-        keys["a"] ||
-        keys["arrowleft"]
-    ) {
-        keyboardSteering -= 1;
-    }
-
-    if (
-        keys["d"] ||
-        keys["arrowright"]
-    ) {
-        keyboardSteering += 1;
-    }
-
-
-    const activeSteering =
-        keyboardSteering !== 0
-            ? keyboardSteering
-            : steering;
-
-
-    /* acceleration */
-
-    if (accelerate) {
-
-        speed +=
-            30 * delta;
-    }
-    else {
-
-        speed -=
-            7 * delta;
-    }
-
-
-    /* braking */
-
-    if (brake) {
-
-        speed -=
-            50 * delta;
-    }
-
-
-    /* nitro */
 
     const usingNitro =
-        nitroPressed &&
+        (
+            keys.space ||
+            nitroHeld
+        ) &&
         nitro > 0 &&
-        speed > 20;
+        speed > 10;
 
 
-    if (usingNitro) {
+    /* ACCELERATION */
+
+    if (
+        accelerating
+    ) {
 
         speed +=
-            60 * delta;
-
-        nitro -=
-            25 * delta;
-
-        nitroFlame.visible = true;
+            34 * delta;
 
     }
     else {
 
-        nitroFlame.visible = false;
+        speed -=
+            8 * delta;
+    }
+
+
+    /* BRAKE */
+
+    if (
+        braking
+    ) {
+
+        speed -=
+            55 * delta;
+    }
+
+
+    /* NITRO */
+
+    if (
+        usingNitro
+    ) {
+
+        speed +=
+            65 * delta;
+
+        nitro -=
+            28 * delta;
+
+        nitroFlame.visible =
+            true;
+
+    }
+    else {
 
         nitro +=
-            5 * delta;
+            6 * delta;
+
+        nitroFlame.visible =
+            false;
     }
+
+
+    const speedLimit =
+        usingNitro
+            ? NITRO_MAX_SPEED
+            : MAX_SPEED;
 
 
     speed =
         THREE.MathUtils.clamp(
             speed,
             0,
-            usingNitro
-                ? 110
-                : maxSpeed
+            speedLimit
         );
 
 
@@ -1723,11 +1753,38 @@ function updatePlayer(delta) {
         );
 
 
-    /* steering */
+    /* STEERING */
+
+    let keyboardSteering = 0;
+
+
+    if (
+        keys.a ||
+        keys.arrowleft
+    ) {
+
+        keyboardSteering -= 1;
+    }
+
+
+    if (
+        keys.d ||
+        keys.arrowright
+    ) {
+
+        keyboardSteering += 1;
+    }
+
+
+    const activeSteering =
+        keyboardSteering !== 0
+            ? keyboardSteering
+            : steering;
+
 
     const steeringPower =
-        8 +
-        speed * .055;
+        7 +
+        speed * .07;
 
 
     player.position.x +=
@@ -1739,38 +1796,40 @@ function updatePlayer(delta) {
     player.position.x =
         THREE.MathUtils.clamp(
             player.position.x,
-            -5.9,
-            5.9
+            -5.7,
+            5.7
         );
 
 
-    /* body lean */
+    /* BODY LEAN */
 
     player.rotation.z =
         THREE.MathUtils.lerp(
             player.rotation.z,
-            -activeSteering * .08,
+            -activeSteering * .1,
             .12
         );
 
 
-    /* wheel rotation */
+    /* WHEELS */
 
-    for (const wheel of wheels) {
+    for (
+        const wheel of wheels
+    ) {
 
         wheel.rotation.x +=
             speed *
             delta *
-            .12;
+            .15;
     }
 
 
-    /* score */
+    /* SCORE */
 
     score +=
         speed *
         delta *
-        .55;
+        .6;
 
 
     updateAudio();
@@ -1778,43 +1837,33 @@ function updatePlayer(delta) {
 
 
 /* =========================================================
-   UPDATE TRAFFIC
+   TRAFFIC UPDATE
 ========================================================= */
 
 function updateTraffic(delta) {
 
-    const movement =
-        speed * delta;
+    const worldMovement =
+        speed *
+        delta;
 
 
-    for (const car of traffic) {
+    for (
+        const car of traffic
+    ) {
 
         car.position.z +=
-            movement *
-            car.userData.speed;
+            worldMovement *
+            car.userData.relativeSpeed;
 
 
         if (
-            car.position.z > 20
+            car.position.z >
+            25
         ) {
 
-            car.position.z =
-                -Math.random() *
-                700 -
-                100;
-
-            car.position.x =
-                [-5, -2.5, 0, 2.5, 5][
-                    Math.floor(
-                        Math.random() * 5
-                    )
-                ];
-
-            car.userData.speed =
-                THREE.MathUtils.randFloat(
-                    .35,
-                    .7
-                );
+            resetTrafficCar(
+                car
+            );
 
             coins++;
         }
@@ -1823,7 +1872,7 @@ function updateTraffic(delta) {
 
 
 /* =========================================================
-   WORLD MOVEMENT
+   WORLD UPDATE
 ========================================================= */
 
 function updateWorld(delta) {
@@ -1833,38 +1882,51 @@ function updateWorld(delta) {
         delta;
 
 
-    for (const marker of laneMarkers) {
+    /* ROAD MARKERS */
+
+    for (
+        const marker of laneMarkers
+    ) {
 
         marker.position.z +=
             movement;
 
+
         if (
-            marker.position.z > 30
+            marker.position.z >
+            35
         ) {
+
             marker.position.z -=
-                2300;
+                2250;
         }
     }
 
 
-    for (const object of worldObjects) {
+    /* BUILDINGS + LIGHTS */
+
+    for (
+        const object of movingObjects
+    ) {
 
         object.position.z +=
             movement;
 
+
         if (
-            object.position.z > 35
+            object.position.z >
+            40
         ) {
 
             object.position.z -=
-                2300;
+                2250;
         }
     }
 
 
-    /* particles */
+    /* PARTICLES */
 
-    const particlePositions =
+    const positions =
         particleGeometry
             .attributes
             .position
@@ -1877,18 +1939,19 @@ function updateWorld(delta) {
         i++
     ) {
 
-        particlePositions[
+        positions[
             i * 3 + 2
-        ] += movement * 2;
+        ] +=
+            movement * 2.2;
 
 
         if (
-            particlePositions[
+            positions[
                 i * 3 + 2
             ] > 15
         ) {
 
-            particlePositions[
+            positions[
                 i * 3 + 2
             ] = -100;
         }
@@ -1903,25 +1966,68 @@ function updateWorld(delta) {
 
 
 /* =========================================================
-   PEOPLE ANIMATION
+   PEDESTRIAN ANIMATION
 ========================================================= */
 
 function updatePeople(time) {
 
-    for (const person of pedestrians) {
+    for (
+        const person of pedestrians
+    ) {
 
         const swing =
             Math.sin(
                 time *
                 person.userData.walkSpeed +
-                person.userData.walkOffset
-            ) * .08;
+                person.userData.phase
+            ) * .35;
+
 
         person.children[2]
-            .rotation.x = swing;
+            .rotation.x =
+            swing;
+
 
         person.children[3]
-            .rotation.x = -swing;
+            .rotation.x =
+            -swing;
+    }
+}
+
+
+/* =========================================================
+   COLLISION
+========================================================= */
+
+function checkCollision() {
+
+    for (
+        const car of traffic
+    ) {
+
+        const dx =
+            Math.abs(
+                player.position.x -
+                car.position.x
+            );
+
+
+        const dz =
+            Math.abs(
+                player.position.z -
+                car.position.z
+            );
+
+
+        if (
+            dx < 2 &&
+            dz < 3
+        ) {
+
+            gameOver();
+
+            return;
+        }
     }
 }
 
@@ -1935,7 +2041,7 @@ function updateCamera() {
     camera.position.x =
         THREE.MathUtils.lerp(
             camera.position.x,
-            player.position.x * .55,
+            player.position.x * .5,
             .08
         );
 
@@ -1943,24 +2049,24 @@ function updateCamera() {
     camera.position.y =
         THREE.MathUtils.lerp(
             camera.position.y,
-            4.5 +
-            speed * .006,
-            .05
+            4.7 +
+            speed * .008,
+            .06
         );
 
 
     camera.position.z =
         THREE.MathUtils.lerp(
             camera.position.z,
-            9.5,
+            10,
             .08
         );
 
 
     camera.lookAt(
-        player.position.x * .35,
-        .7,
-        -18
+        player.position.x * .25,
+        .8,
+        -20
     );
 }
 
@@ -1971,31 +2077,266 @@ function updateCamera() {
 
 function updateHUD() {
 
-    document
-        .getElementById("score")
-        .textContent =
+    scoreEl.textContent =
         Math.floor(score)
             .toLocaleString();
 
 
-    document
-        .getElementById("speed")
-        .textContent =
+    speedEl.textContent =
         Math.floor(
             speed * 3.6
         );
 
 
-    document
-        .getElementById("coins")
-        .textContent =
+    coinsEl.textContent =
         coins;
 }
 
 
 /* =========================================================
-   MAIN LOOP
+   BUTTONS
 ========================================================= */
+
+$("start-btn")
+    .addEventListener(
+        "click",
+        startGame
+    );
+
+
+$("pause-btn")
+    .addEventListener(
+        "click",
+        pauseGame
+    );
+
+
+$("resume-btn")
+    .addEventListener(
+        "click",
+        resumeGame
+    );
+
+
+$("restart-btn")
+    .addEventListener(
+        "click",
+        startGame
+    );
+
+
+$("game-restart-btn")
+    .addEventListener(
+        "click",
+        startGame
+    );
+
+
+$("menu-btn")
+    .addEventListener(
+        "click",
+        returnToMenu
+    );
+
+
+$("game-menu-btn")
+    .addEventListener(
+        "click",
+        returnToMenu
+    );
+
+
+/* =========================================================
+   THEMES
+========================================================= */
+
+const themes = [
+
+    {
+        name: "NIGHT CITY",
+        sky: 0x050914,
+        road: 0x151820,
+        ground: 0x101817
+    },
+
+    {
+        name: "NEON CITY",
+        sky: 0x160522,
+        road: 0x110d19,
+        ground: 0x180d20
+    },
+
+    {
+        name: "MIDNIGHT BLUE",
+        sky: 0x031326,
+        road: 0x111827,
+        ground: 0x071c1c
+    },
+
+    {
+        name: "DEEP PURPLE",
+        sky: 0x10051c,
+        road: 0x19121f,
+        ground: 0x130c19
+    }
+
+];
+
+
+let currentTheme = 0;
+
+
+function applyTheme() {
+
+    const theme =
+        themes[currentTheme];
+
+
+    scene.background =
+        new THREE.Color(
+            theme.sky
+        );
+
+
+    scene.fog.color =
+        new THREE.Color(
+            theme.sky
+        );
+
+
+    roadMaterial.color =
+        new THREE.Color(
+            theme.road
+        );
+
+
+    groundMaterial.color =
+        new THREE.Color(
+            theme.ground
+        );
+
+
+    $("theme-btn")
+        .textContent =
+        `THEME: ${theme.name}`;
+}
+
+
+$("theme-btn")
+    .addEventListener(
+        "click",
+        () => {
+
+            currentTheme++;
+
+            if (
+                currentTheme >=
+                themes.length
+            ) {
+
+                currentTheme = 0;
+            }
+
+            applyTheme();
+        }
+    );
+
+
+applyTheme();
+
+
+/* =========================================================
+   LOADING
+========================================================= */
+
+let loading =
+    0;
+
+
+const loadingTimer =
+    setInterval(
+        () => {
+
+            loading +=
+                Math.random() * 18 + 8;
+
+
+            if (
+                loading >= 100
+            ) {
+
+                loading = 100;
+
+                clearInterval(
+                    loadingTimer
+                );
+
+
+                loadingText.textContent =
+                    "READY TO RACE";
+
+
+                setTimeout(
+                    () => {
+
+                        loadingScreen
+                            .classList
+                            .add(
+                                "hidden"
+                            );
+
+
+                        mainMenu
+                            .classList
+                            .remove(
+                                "hidden"
+                            );
+
+                    },
+                    400
+                );
+            }
+
+
+            loadingProgress.style.width =
+                `${loading}%`;
+
+        },
+        120
+    );
+
+
+/* =========================================================
+   RESIZE
+========================================================= */
+
+window.addEventListener(
+    "resize",
+    () => {
+
+        camera.aspect =
+            window.innerWidth /
+            window.innerHeight;
+
+
+        camera.updateProjectionMatrix();
+
+
+        renderer.setSize(
+            window.innerWidth,
+            window.innerHeight
+        );
+    }
+);
+
+
+/* =========================================================
+   MAIN GAME LOOP
+========================================================= */
+
+const clock =
+    new THREE.Clock();
+
 
 function animate() {
 
@@ -2012,28 +2353,53 @@ function animate() {
 
 
     const time =
-        performance.now() * .001;
+        performance.now() *
+        .001;
 
+
+    /*
+       IMPORTANT:
+       The game continuously renders.
+       Gameplay updates only when PLAYING.
+    */
 
     if (
-        gameState === STATE.PLAYING
+        gameState ===
+        STATE.PLAYING
     ) {
 
-        updatePlayer(delta);
+        updatePlayer(
+            delta
+        );
 
-        updateTraffic(delta);
+        updateTraffic(
+            delta
+        );
 
-        updateWorld(delta);
+        updateWorld(
+            delta
+        );
 
-        updatePeople(time);
+        updatePeople(
+            time
+        );
 
         updateCamera();
 
         checkCollision();
 
         updateHUD();
+
     }
     else {
+
+        /*
+           Even menu/pause remains smoothly rendered.
+        */
+
+        updatePeople(
+            time
+        );
 
         updateCamera();
     }
@@ -2046,91 +2412,12 @@ function animate() {
 }
 
 
+/* =========================================================
+   START LOOP
+========================================================= */
+
 animate();
 
-
-/* =========================================================
-   LOADING
-========================================================= */
-
-let loadingProgress = 0;
-
-const loadingInterval =
-    setInterval(
-        () => {
-
-            loadingProgress +=
-                Math.random() * 18;
-
-            if (
-                loadingProgress >= 100
-            ) {
-
-                loadingProgress = 100;
-
-                clearInterval(
-                    loadingInterval
-                );
-
-                document
-                    .getElementById(
-                        "loading-text"
-                    )
-                    .textContent =
-                    "READY TO RACE";
-
-                setTimeout(
-                    () => {
-
-                        document
-                            .getElementById(
-                                "loading-screen"
-                            )
-                            .classList
-                            .add("hidden");
-
-                        document
-                            .getElementById(
-                                "main-menu"
-                            )
-                            .classList
-                            .remove("hidden");
-
-                    },
-                    500
-                );
-            }
-
-
-            document
-                .getElementById(
-                    "loading-progress"
-                )
-                .style.width =
-                `${loadingProgress}%`;
-
-        },
-        180
-    );
-
-
-/* =========================================================
-   RESIZE
-========================================================= */
-
-window.addEventListener(
-    "resize",
-    () => {
-
-        camera.aspect =
-            window.innerWidth /
-            window.innerHeight;
-
-        camera.updateProjectionMatrix();
-
-        renderer.setSize(
-            window.innerWidth,
-            window.innerHeight
-        );
-    }
+console.log(
+    "ROAD RUSH: INFINITE loaded successfully."
 );
